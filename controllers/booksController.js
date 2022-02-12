@@ -2,11 +2,25 @@ import mongoose from "mongoose";
 import booksModel from "../models/booksModel.js";
 
 export const getBooks = async (req, res) => {
+  const { page } = req.query;
   if (!req.userId)
     return res.json({ message: "Unauthorized! Kindly Login / Sign In again!" });
   try {
-    const booksData = await booksModel.find();
-    res.status(200).json(booksData);
+    const LIMIT = 8;
+    const startIndex = (Number(page) - 1) * LIMIT;
+    const total = await booksModel.countDocuments({});
+    const booksData = await booksModel
+      .find()
+      .sort({ _id: -1 })
+      .limit(LIMIT)
+      .skip(startIndex);
+    res
+      .status(200)
+      .json({
+        books: booksData,
+        currentPage: Number(page),
+        numberOfPages: Math.ceil(total / LIMIT),
+      });
   } catch (error) {
     res.status(404).json({ message: error.message });
   }
@@ -19,12 +33,10 @@ export const addBook = async (req, res) => {
   const newBook = new booksModel(book);
   try {
     await newBook.save();
-    res
-      .status(200)
-      .json({
-        message: "Book Added Successfully!",
-        data: { ...book, createdAt: Date.now() },
-      });
+    res.status(200).json({
+      message: "Book Added Successfully!",
+      data: { ...book, createdAt: Date.now() },
+    });
   } catch (error) {
     res.status(404).json({ message: error.message });
   }
@@ -61,13 +73,13 @@ export const addReview = async (req, res) => {
         rating: Number(rating),
         user: userId,
       };
-      
+
       book.reviews.push(review);
       book.totalReviews = book.reviews.length;
       book.averageReviews =
-      book.reviews.reduce((acc, item) => item.rating + acc, 0) /
-      book.reviews.length;
-      
+        book.reviews.reduce((acc, item) => item.rating + acc, 0) /
+        book.reviews.length;
+
       await book.save();
       res.status(200).json({ message: "Review added Successfully!", review });
     } catch (error) {

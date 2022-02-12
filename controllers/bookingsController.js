@@ -19,12 +19,10 @@ export const addBooking = async (req, res) => {
   const newBooking = new bookingModel(booking);
   try {
     await newBooking.save();
-    res
-      .status(200)
-      .json({
-        message: "Book Requested Successfully!",
-        data: { ...booking, createdAt: Date.now() },
-      });
+    res.status(200).json({
+      message: "Book Requested Successfully!",
+      data: { ...booking, createdAt: Date.now() },
+    });
   } catch (error) {
     res.status(404).json({ message: error.message });
   }
